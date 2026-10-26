@@ -27,12 +27,17 @@ class CartItemSerializer(serializers.ModelSerializer):
         return value
 
 
+
     def validate(self, data):
         product = data.get('product')
         quantity = data.get('quantity')
 
         if product and quantity:
-            cart = self.context['request'].user.cart
+            user = self.context['request'].user
+
+            cart, created = Cart.objects.get_or_create(
+                user=user
+            )
 
             cart_item = CartItem.objects.filter(cart=cart,product=product).first()
 

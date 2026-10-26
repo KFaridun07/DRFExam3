@@ -5,6 +5,7 @@ from .serializers import CartSerializer, CartItemSerializer,OrderSerializer,Orde
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
 
 
 
@@ -39,11 +40,15 @@ class CartItemCreateView(generics.CreateAPIView):
 
 
 
+
 class CartItemDeleteView(generics.DestroyAPIView):
     serializer_class = CartItemSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return CartItem.objects.none()
+
         cart = Cart.objects.filter(user=self.request.user).first()
 
         if cart is None:
@@ -54,7 +59,8 @@ class CartItemDeleteView(generics.DestroyAPIView):
 
 
 
-class CheckoutView(generics.APIView):
+
+class CheckoutView(APIView):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -119,7 +125,11 @@ class OrderDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Order.objects.none()
+
         return Order.objects.filter(user=self.request.user)
+
 
 
 
@@ -131,10 +141,10 @@ class OrderCancelView(generics.GenericAPIView):
             order = Order.objects.filter(id=pk,user=request.user).first()
 
             if order is None:
-                return Response({'error': 'Order not found'},status=404)
+                return Response({'error': 'Zakaz ne nayden'},status=404)
 
             if order.status != 'pending':
-                return Response({'error': 'Only pending orders can be cancelled'},status=400)
+                return Response({'error': 'Tolko  status zakaz pending mojno otmenyat'},status=400)
 
             order_items = OrderItem.objects.filter(order=order)
 
