@@ -1,8 +1,9 @@
 
 from rest_framework import serializers
-from .models import Cart, CartItem
+from .models import Cart, CartItem,Order,OrderItem
 from products.models import Product
 from products.serializers import ProductSerializer
+
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -56,3 +57,38 @@ class CartSerializer(serializers.ModelSerializer):
         model = Cart
         fields = ['id', 'user', 'created_at', 'items']
         read_only_fields = ['id', 'user', 'created_at']
+
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(
+        source='product.name',
+        read_only=True
+    )
+
+    class Meta:
+        model = OrderItem
+        fields = ['id','product','product_name','quantity','price',]
+        read_only_fields = fields
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id','total_price','status','created_at','items',]
+        read_only_fields = fields
+
+
+class OrderStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['status']
+
+    def validate_status(self, value):
+        if value not in ['pending', 'processed', 'cancelled']:
+            raise serializers.ValidationError('Invalid order status')
+        return value
+
+
